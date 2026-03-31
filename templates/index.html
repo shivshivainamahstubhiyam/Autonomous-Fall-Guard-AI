@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fall Detection Hub | Autonomous AI Dashboard</title>
+    <style>
+        :root {
+            --primary: #6366f1; /* Indigo-500 */
+            --bg: #0f172a; /* Slate-900 */
+            --panel: rgba(30, 41, 59, 0.7); /* Slate-800 with glass opacity */
+            --text-main: #f8fafc; /* Slate-50 */
+            --text-dim: #94a3b8; /* Slate-400 */
+            --accent: #f43f5e; /* Rose-500 for alerts */
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes pulseAlert {
+            0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(244, 63, 94, 0.05) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        header {
+            width: 100%;
+            padding: 2rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, var(--primary), #818cf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        header p {
+            color: var(--text-dim);
+            margin-top: 0.5rem;
+        }
+
+        .main-container {
+            width: 95%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            padding-bottom: 4rem;
+        }
+
+        .feed-card {
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+        }
+
+        .video-wrapper {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2px solid var(--border);
+        }
+
+        #video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .status-card {
+            background: var(--panel);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 20px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 1rem;
+            border-radius: 100px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            margin-bottom: 1rem;
+        }
+
+        .status-badge.alert {
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--accent);
+            animation: pulseAlert 2s infinite;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-main);
+        }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .id-badge {
+            font-family: monospace;
+            background: var(--primary);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .footer-note {
+            margin-top: auto;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            padding: 2rem;
+        }
+
+        @media (max-width: 968px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Autonomous Fall Guard AI</h1>
+        <p>Real-time locally hosted server for autonomous safety monitoring</p>
+        <button id="sound-btn" style="margin-top: 1rem; background: var(--primary); color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 100px; cursor: pointer; font-weight: 600; opacity: 0.8; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="toggleSound()">🔈 ALARM MUTED (Click to Enable)</button>
+    </header>
+
+    <div class="main-container">
+        <!-- Live Video Block -->
+        <div class="feed-card">
+            <div class="video-wrapper">
+                <img id="video-feed" src="/video_feed" alt="Video Stream Loading...">
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <div style="flex: 1; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                    <p style="font-size: 0.8rem; color: var(--text-dim);">SYSTEM ENDPOINT</p>
+                    <p style="font-weight: 600;">127.0.0.1:5000</p>
+                </div>
+                <div style="flex: 1; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                    <p style="font-size: 0.8rem; color: var(--text-dim);">MODEL SENDER</p>
+                    <p style="font-weight: 600; overflow: hidden; text-overflow: ellipsis;">parmarjatin5565@gmail.com</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monitoring Controls Block -->
+        <div class="side-panel">
+            <div class="status-card">
+                <div id="sys-status" class="status-badge">● SYSTEM ACTIVE</div>
+                <h3>Active Monitoring</h3>
+                <div id="activity-list">
+                    <p style="color: var(--text-dim); font-size: 0.9rem;">Waiting for detections...</p>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h3>Credentials Config</h3>
+                <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5;">
+                    alerts are being sent via SMTP on port 587. <br><br>
+                    <strong>SENDER:</strong> parmarjatin5565@gmail.com<br>
+                    <strong>RECIPIENT:</strong> parmarjatin5565@gmail.com
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <p class="footer-note">Running autonomously on local host server | Powered by Antigravity AI</p>
+
+    <audio id="alarm-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <script>
+        const activityList = document.getElementById('activity-list');
+        const sysStatus = document.getElementById('sys-status');
+        const alarm = document.getElementById('alarm-sound');
+        const soundBtn = document.getElementById('sound-btn');
+        let alertedIdsCount = 0;
+        let soundEnabled = false;
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            if (soundEnabled) {
+                soundBtn.innerText = "🔊 ALARM ENABLED";
+                soundBtn.style.background = "#10b981";
+                // Chrome requires a user action to unlock the audio context
+                alarm.play().then(() => {
+                    alarm.pause(); 
+                    alarm.currentTime = 0;
+                }).catch(e => console.log("Audio prep failed"));
+            } else {
+                soundBtn.innerText = "🔈 ALARM MUTED (Click to Enable)";
+                soundBtn.style.background = "var(--primary)";
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                if (data.ids_alerted.length > 0) {
+                    sysStatus.className = 'status-badge alert';
+                    sysStatus.innerText = '● ALERT DETECTED';
+                    
+                    // Trigger "Ring Type" alarm if a new person is detected
+                    if (data.ids_alerted.length > alertedIdsCount) {
+                        if (soundEnabled) {
+                            try {
+                                alarm.play();
+                                console.log("[ALARM] Ringing...");
+                            } catch (err) {
+                                console.warn("Audio play blocked");
+                            }
+                        }
+                        alertedIdsCount = data.ids_alerted.length;
+                    }
+
+                    let html = '<h3>Detections</h3>';
+                    data.ids_alerted.forEach(id => {
+                        html += `
+                            <div class="activity-item">
+                                <span>Person <span class="id-badge">ID ${id}</span></span>
+                                <span style="color: var(--accent);">Alert Sent</span>
+                            </div>
+                        `;
+                    });
+                    activityList.innerHTML = html;
+                }
+            } catch (e) {
+                console.error("Status check failed", e);
+            }
+        }
+
+        setInterval(updateStatus, 2000);
+    </script>
+</body>
+</html>
